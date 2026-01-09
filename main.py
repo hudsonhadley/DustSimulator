@@ -3,7 +3,30 @@ import pygame
 from particle import Particle
 from pole import Pole
 from random import randint
-    
+import math
+
+def generate_donut(screen_width: int, screen_height: int, particle_list: list[Particle], particle_count: int, radius: int, width: int, speed: int=0):
+    for i in range(particle_count):
+        mag = randint(radius-width, radius)    
+        dir = math.radians(randint(0, 360))
+
+        x = mag * math.cos(dir) + screen_width/2
+        y = mag * math.sin(dir) + screen_height/2
+
+        vx = speed * math.cos(dir + math.pi/2)
+        vy = speed * math.sin(dir + math.pi/2)
+        particle_list.append(Particle(x, y, vx, vy))
+
+def generate_circle(particle_list: list[Particle], particle_count: int, x: int, y: int, radius: int, vx: int=0, vy: int=0):
+    for i in range(particle_count):
+        mag = randint(0, radius)
+        dir = math.radians(randint(0, 360))
+
+        x_pos = mag * math.cos(dir) + x
+        y_pos = mag * math.sin(dir) + y
+
+        particle_list.append(Particle(x_pos, y_pos, vx, vy))
+
 
 def main():
     pygame.init()
@@ -12,22 +35,13 @@ def main():
     screen = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
     running = True
-    particle_count = 2000
+    particle_count = 4000
 
     particles: list[Particle] = []
-    for i in range(particle_count):
-        particles.append(Particle(randint(0, 250), randint(0, 250), vx=150))
-    
+    generate_circle(particles, particle_count, 250, 750, 50, 100)
+
     poles: list[Pole] = [
-                         Pole(450, 450, -100),
-                         Pole(450, 500, 100),
-                         Pole(450, 550, -100),
-                         Pole(500, 450, 100),
-                         Pole(500, 500, 100),
-                         Pole(500, 550, 100),
-                         Pole(550, 450, -100),
-                         Pole(550, 500, 100),
-                         Pole(550, 550, -100)
+                         Pole(500, 500, 100)
                          ]
 
     push_pole_color: tuple[int, int, int] = (0, 0, 255)
