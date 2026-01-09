@@ -48,7 +48,6 @@ def main():
     pull_pole_color: tuple[int, int, int] = (255, 0, 0)
     pole_size: int = 8
 
-    particle_color: tuple[int, int, int] = (255, 255, 255)
     particle_size: int = 3
 
     while running:
@@ -77,7 +76,7 @@ def main():
 
         # Draw particles
         for particle in particles:
-            pygame.draw.circle(screen, particle_color, particle.pos, particle_size)
+            pygame.draw.circle(screen, particle.get_color_from_velocity(), particle.pos, particle_size)
 
         # flip() the display to put your work on screen
         pygame.display.flip()

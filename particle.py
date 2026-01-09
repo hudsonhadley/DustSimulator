@@ -15,3 +15,10 @@ class Particle :
 
     def update(self, dt: float):
         self.pos += self.vel * dt
+
+    def get_color_from_velocity(self) -> tuple[int, int, int]:
+        magnitude: int = int(self.vel.magnitude())
+        if magnitude > 255:
+            magnitude = 255
+
+        return (magnitude, magnitude, magnitude)
