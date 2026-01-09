@@ -18,7 +18,7 @@ class Particle :
 
     def get_color_from_velocity(self) -> tuple[int, int, int]:
 
-        # We'll use magnitude as the hue for hsb coloring and then convert to rgb
+        # We'll use magnitude as the hue for hsv coloring and then convert to rgb
         magnitude: int = int(self.vel.magnitude())
         if magnitude > 360:
             magnitude = 360
@@ -27,6 +27,16 @@ class Particle :
         brightness: float = 1
 
         return hsv_to_rgb(magnitude, saturation, brightness)
+    
+    def get_color_from_direction(self) -> tuple[int, int, int]:
+        # Use direction of velovity for hsv coloring and then convert to rgb
+
+        direction = self.vel.as_polar()[1]
+
+        saturation = 1
+        brightness = 1
+
+        return hsv_to_rgb(direction, saturation, brightness)
 
 def hsv_to_rgb(h: float, s: float, v: float) -> tuple[int, int, int]:
     h %= 360

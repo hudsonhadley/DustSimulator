@@ -79,7 +79,7 @@ def main():
 
         # Draw particles
         for particle in particles:
-            pygame.draw.circle(screen, particle.get_color_from_velocity(), particle.pos, particle_size)
+            pygame.draw.circle(screen, particle.get_color_from_direction(), particle.pos, particle_size)
 
         # flip() the display to put your work on screen
         pygame.display.flip()
