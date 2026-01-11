@@ -38,7 +38,10 @@ def main():
     particle_count = 4000
 
     particles: list[Particle] = []
-    generate_circle(particles, particle_count, 250, 750, 50, 100)
+    generate_circle(particles, particle_count//4, 500, 250, 40, vx=150)
+    generate_circle(particles, particle_count//4, 750, 500, 40, vy=150)
+    generate_circle(particles, particle_count//4, 500, 750, 40, vx=-150)
+    generate_circle(particles, particle_count//4, 250, 500, 40, vy=-150)
 
     poles: list[Pole] = [
                          Pole(500, 500, 100)
@@ -48,8 +51,7 @@ def main():
     pull_pole_color: tuple[int, int, int] = (255, 0, 0)
     pole_size: int = 8
 
-    particle_color: tuple[int, int, int] = (255, 255, 255)
-    particle_size: int = 3
+    particle_size: int = 1
 
     while running:
         dt = clock.tick(60) / 1000.0
@@ -77,7 +79,7 @@ def main():
 
         # Draw particles
         for particle in particles:
-            pygame.draw.circle(screen, particle_color, particle.pos, particle_size)
+            pygame.draw.circle(screen, particle.get_color_from_direction(), particle.pos, particle_size)
 
         # flip() the display to put your work on screen
         pygame.display.flip()
