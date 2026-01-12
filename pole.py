@@ -3,7 +3,7 @@ import pygame
 import math
 
 class Pole:
-    def __init__(self, x: float, y: float, strength: float, radius: int|None=None, speed: int|None=None, direction: int|None=None):
+    def __init__(self, x: float, y: float, strength: float, radius: int|None=None, speed: int|None=None, direction: int|None=None, theta_init: float|None=None):
         """
         Positive values pull particles while negative values push them.
         Radius and speed should be assigned when wanting to put the pole on a circular path and the x,y given.
@@ -20,9 +20,14 @@ class Pole:
         elif radius is not None and speed is not None and direction is None:
             self.movement = "Circuit"
             self.center = pygame.Vector2(x, y)
-            self.pos += pygame.Vector2(radius, 0) # Put it at theta=0
             self.radius = radius
             self.speed = speed
+
+            if theta_init is None:
+                theta_init = 0
+            
+            self.pos.x = self.center.x + self.radius * math.cos(theta_init)
+            self.pos.y = self.center.y + self.radius * math.sin(theta_init)
 
         # Line
         elif radius is None and speed is not None and direction is not None:

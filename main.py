@@ -38,10 +38,11 @@ def main():
     particle_count = 4000
 
     particles: list[Particle] = []
-    generate_circle(particles, particle_count, 500, 500, 10)
+    generate_circle(particles, particle_count, 500, 500, 100)
 
     poles: list[Pole] = [
-                         Pole(500, 500, 100, radius=300, speed=200)
+                         Pole(500, 500, 100, radius=200, speed=150, theta_init=0),
+                         Pole(500, 500, 100, radius=200, speed=150, theta_init=math.pi)
                          ]
 
     push_pole_color: tuple[int, int, int] = (0, 0, 255)
