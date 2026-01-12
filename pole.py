@@ -3,7 +3,7 @@ import pygame
 import math
 
 class Pole:
-    def __init__(self, x: float, y: float, strength: float, radius: int|None=None, speed: int|None=None, direction: int|None=None, theta_init: float|None=None):
+    def __init__(self, x: float, y: float, strength: float, radius: int|None=None, speed: int|None=None, direction: int|None=None, theta_init: int|None=None):
         """
         Positive values pull particles while negative values push them.
         Radius and speed should be assigned when wanting to put the pole on a circular path and the x,y given.
@@ -26,12 +26,19 @@ class Pole:
             if theta_init is None:
                 theta_init = 0
             
-            self.pos.x = self.center.x + self.radius * math.cos(theta_init)
-            self.pos.y = self.center.y + self.radius * math.sin(theta_init)
+            rad = math.radians(theta_init)
+            self.pos.x = self.center.x + self.radius * math.cos(rad)
+            self.pos.y = self.center.y + self.radius * math.sin(rad)
 
         # Line
         elif radius is None and speed is not None and direction is not None:
             self.movement = "Line"
+            rad = math.radians(direction)
+
+            vx = speed * math.cos(rad)
+            vy = speed * math.sin(rad)
+
+            self.vel = pygame.Vector2(vx, vy)
 
     def force_on(self, particle: Particle) -> pygame.Vector2:
         direction: pygame.Vector2 = self.pos - particle.pos
@@ -55,3 +62,6 @@ class Pole:
 
             self.pos.x = self.center.x + self.radius * math.cos(theta)
             self.pos.y = self.center.y + self.radius * math.sin(theta)
+        
+        elif self.movement == "Line":
+            self.pos += self.vel * dt
