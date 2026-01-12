@@ -38,13 +38,10 @@ def main():
     particle_count = 4000
 
     particles: list[Particle] = []
-    generate_circle(particles, particle_count//4, 500, 250, 40, vx=150)
-    generate_circle(particles, particle_count//4, 750, 500, 40, vy=150)
-    generate_circle(particles, particle_count//4, 500, 750, 40, vx=-150)
-    generate_circle(particles, particle_count//4, 250, 500, 40, vy=-150)
+    generate_circle(particles, particle_count, 500, 500, 100)
 
     poles: list[Pole] = [
-                         Pole(500, 500, 100)
+                         Pole(0, 500, -100, speed=1000, direction=0)
                          ]
 
     push_pole_color: tuple[int, int, int] = (0, 0, 255)
@@ -67,6 +64,9 @@ def main():
 
             particle.apply_force(net_force, dt)
             particle.update(dt)
+
+        for pole in poles:
+            pole.move(dt)
 
         screen.fill("black")
 
