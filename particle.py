@@ -8,7 +8,6 @@ class Particle :
         self.vel: pygame.Vector2 = pygame.Vector2(vx, vy)
 
         self.mass = mass
-        self.G = 6.674 # Gravitational constant. This means that mass is in units of 10^11 kg
 
     def apply_force(self, force: pygame.Vector2, dt: float):
         self.vel += (force / self.mass) * dt
