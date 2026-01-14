@@ -17,7 +17,7 @@ def generate_donut(particle_list: list[Particle], x: int, y: int, particle_count
 
         vx = speed * math.cos(dir + math.pi/2)
         vy = speed * math.sin(dir + math.pi/2)
-        particle_list.append(Particle(x, y, vx, vy))
+        particle_list.append(Particle(x_pos, y_pos, vx, vy))
 
 def generate_circle(particle_list: list[Particle], particle_count: int, x: int, y: int, radius: int, vx: int=0, vy: int=0):
     for i in range(particle_count):
@@ -69,7 +69,17 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
                             )
     
     parsed_scenario["poles"] = []
-    
+    for pole_spec in scenario["poles"]:
+        parsed_scenario["poles"].append(
+            Pole(pole_spec["x"],
+                 pole_spec["y"],
+                 pole_spec["strength"],
+                 pole_spec.get("radius", None),
+                 pole_spec.get("speed", None),
+                 pole_spec.get("direction", None),
+                 pole_spec.get("theta_init", None)
+                 )
+        )
     return parsed_scenario
 
 
@@ -83,7 +93,7 @@ def main():
     clock = pygame.time.Clock()
     running = True
 
-    push_pole_color: tuple[int, int, int] = (0, 0, 255)
+    push_pole_color: tuple[int, int, int] = (100, 100, 255)
     pull_pole_color: tuple[int, int, int] = (255, 0, 0)
     pole_size: int = 8
 
