@@ -121,6 +121,9 @@ def main():
 
         # Draw poles
         for pole in scenario_mapping["poles"]:
+            if pole.pos.x < 0 or pole.pos.x > width or pole.pos.y < 0 or pole.pos.y > height:
+                continue # Don't draw if off the screen
+
             if pole.strength < 0:
                 pygame.draw.circle(screen, push_pole_color, pole.pos, pole_size)
             else:
@@ -128,6 +131,9 @@ def main():
 
         # Draw particles
         for particle in scenario_mapping["particles"]:
+            if particle.pos.x < 0 or particle.pos.x > width or particle.pos.y < 0 or particle.pos.y > height:
+                continue # Don't draw if off the screen
+
             if scenario_mapping["particle_color"] == "direction":
                 pygame.draw.circle(screen, particle.get_color_from_direction(), particle.pos, particle_size)
             elif scenario_mapping["particle_color"] == "magnitude":
