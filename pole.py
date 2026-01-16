@@ -39,6 +39,9 @@ class Pole:
             vy = speed * math.sin(rad)
 
             self.vel = pygame.Vector2(vx, vy)
+        
+        else:
+            raise AttributeError("Invalid configuration for Pole. Ensure that radius and speed is set, speed and direction is set, or nothing is set")
 
     def force_on(self, particle: Particle) -> pygame.Vector2:
         direction: pygame.Vector2 = self.pos - particle.pos
