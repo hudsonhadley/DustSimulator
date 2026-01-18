@@ -6,28 +6,47 @@ from pole import Pole
 from random import randint
 import json
 import math
+import numpy as np
 
-def generate_donut(particle_list: list[Particle], x: int, y: int, particle_count: int, radius: int, width: int, speed: int=0):
+def generate_donut(particle_pos: list[list[float]], 
+                   particle_vel: list[list[float]],
+                   particle_count: int,
+                   x: float, 
+                   y: float,
+                   radius: int,
+                   width: int, 
+                   speed: float=0
+                   ):
+    
     for i in range(particle_count):
         mag = randint(radius-width, radius)    
         dir = math.radians(randint(0, 360))
 
         x_pos = mag * math.cos(dir) + x
         y_pos = mag * math.sin(dir) + y
+        particle_pos.append([x_pos, y_pos])
 
         vx = speed * math.cos(dir + math.pi/2)
         vy = speed * math.sin(dir + math.pi/2)
-        particle_list.append(Particle(x_pos, y_pos, vx, vy))
+        particle_vel.append([vx, vy])
 
-def generate_circle(particle_list: list[Particle], particle_count: int, x: int, y: int, radius: int, vx: int=0, vy: int=0):
+def generate_circle(particle_pos: list[list[float]], 
+                    particle_vel: list[list[float]], 
+                    particle_count: int, 
+                    x: float, 
+                    y: float, 
+                    radius: int, 
+                    vx: float=0, 
+                    vy: float=0):
+    
     for i in range(particle_count):
         mag = randint(0, radius)
         dir = math.radians(randint(0, 360))
 
         x_pos = mag * math.cos(dir) + x
         y_pos = mag * math.sin(dir) + y
-
-        particle_list.append(Particle(x_pos, y_pos, vx, vy))
+        particle_pos.append([x_pos, y_pos])
+        particle_vel.append([vx, vy])
 
 def read_scenario(scenario_file: str) -> dict[str, Any]:
     """
@@ -47,39 +66,57 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     parsed_scenario["background_color"] = scenario.get("background_color", [0, 0, 0])
     parsed_scenario["particle_color"] = scenario.get("particle_color", [255, 255, 255])
 
-    parsed_scenario["particles"] = []
+    particle_pos = []
+    particle_vel = []
+
+    total_particle_count = 0
     for particle_spec in scenario["particles"]:
         if particle_spec["shape"] == "donut":
-            generate_donut(parsed_scenario["particles"],
+            generate_donut(particle_pos,
+                           particle_vel,
+                           particle_spec["count"],
                            particle_spec["x"],
                            particle_spec["y"],
-                           particle_spec["count"],
                            particle_spec["radius"],
                            particle_spec["width"],
                            particle_spec.get("speed", 0)
                            )
+            
         elif particle_spec["shape"] == "circle":
-            generate_circle(parsed_scenario["particles"],
+            generate_circle(particle_pos,
+                            particle_vel,
                             particle_spec["count"],
                             particle_spec["x"],
                             particle_spec["y"],
                             particle_spec["radius"],
-                            particle_spec.get("vx", 0),
-                            particle_spec.get("vy", 0)
+                            float(particle_spec.get("vx", 0)),
+                            float(particle_spec.get("vy", 0))
                             )
+            
+        total_particle_count += particle_spec['count']
     
-    parsed_scenario["poles"] = []
+    parsed_scenario['particles'] = {
+        'pos': np.array(particle_pos),
+        'vel': np.array(particle_vel),
+        'mass': np.full(total_particle_count, scenario['mass'])
+    }
+    parsed_scenario['particle_count'] = total_particle_count
+    
+    pole_pos = []
+    pole_strength = []
+    pole_count = 0
     for pole_spec in scenario["poles"]:
-        parsed_scenario["poles"].append(
-            Pole(pole_spec["x"],
-                 pole_spec["y"],
-                 pole_spec["strength"],
-                 pole_spec.get("radius", None),
-                 pole_spec.get("speed", None),
-                 pole_spec.get("direction", None),
-                 pole_spec.get("theta_init", None)
-                 )
-        )
+        pole_pos.append([pole_spec['x'], pole_spec['y']])
+        pole_strength.append(pole_spec['strength'])
+
+        pole_count += 1
+
+    parsed_scenario['poles'] = {
+        'pos': np.array(pole_pos),
+        'strength': np.array(pole_strength)
+    }     
+    parsed_scenario['pole_count'] = pole_count
+    
     return parsed_scenario
 
 
@@ -88,6 +125,12 @@ def main():
     scenario_mapping = read_scenario("scenario.json")
     width = scenario_mapping["width"]
     height = scenario_mapping["height"]
+    particle_count = scenario_mapping['particle_count']
+    pole_count = scenario_mapping['pole_count']
+    background_color = scenario_mapping['background_color']
+
+    particles = scenario_mapping['particles']
+    poles = scenario_mapping['poles']
     
     screen = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
@@ -106,40 +149,34 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        for particle in scenario_mapping["particles"]:
-            net_force = pygame.Vector2(0, 0)
-            for pole in scenario_mapping["poles"]:
-                net_force += pole.force_on(particle)
+        delta = particles["pos"][:, None, :] - poles["pos"][None, :, :]
+        dist_sq = np.sum(delta**2, axis=2)
+        dist = np.sqrt(dist_sq)
 
-            particle.apply_force(net_force, dt)
-            particle.update(dt)
+        force_mag = poles["strength"] / dist_sq
+        force_dir = delta / dist[:, :, None]
+        forces = force_dir * force_mag[:, :, None]
 
-        for pole in scenario_mapping["poles"]:
-            pole.move(dt)
+        total_force = forces.sum(axis=1)
 
-        screen.fill(scenario_mapping["background_color"])
+        acc = total_force / particles["mass"][:, None]
+        particles['vel'] += acc * dt
+        particles['pos'] += particles['vel'] * dt
+
+        screen.fill(background_color)
 
         # Draw poles
-        for pole in scenario_mapping["poles"]:
-            if pole.pos.x < 0 or pole.pos.x > width or pole.pos.y < 0 or pole.pos.y > height:
-                continue # Don't draw if off the screen
+        for i in range(pole_count):
 
-            if pole.strength < 0:
-                pygame.draw.circle(screen, push_pole_color, pole.pos, pole_size)
+            if poles['strength'][i] > 0:
+                pygame.draw.circle(screen, push_pole_color, poles['pos'][i], pole_size)
             else:
-                pygame.draw.circle(screen, pull_pole_color, pole.pos, pole_size)
+                pygame.draw.circle(screen, pull_pole_color, poles['pos'][i], pole_size)
 
         # Draw particles
-        for particle in scenario_mapping["particles"]:
-            if particle.pos.x < 0 or particle.pos.x > width or particle.pos.y < 0 or particle.pos.y > height:
-                continue # Don't draw if off the screen
+        for i in range(particle_count):
 
-            if scenario_mapping["particle_color"] == "direction":
-                pygame.draw.circle(screen, particle.get_color_from_direction(), particle.pos, particle_size)
-            elif scenario_mapping["particle_color"] == "magnitude":
-                pygame.draw.circle(screen, particle.get_color_from_velocity(), particle.pos, particle_size)
-            else:
-                pygame.draw.circle(screen, scenario_mapping["particle_color"], particle.pos, particle_size)
+            pygame.draw.circle(screen, (0, 255, 0), particles['pos'][i], particle_size)
 
         # flip() the display to put your work on screen
         pygame.display.flip()
