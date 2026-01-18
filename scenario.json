@@ -1,45 +1,40 @@
 {
     "width": 1000,
     "height": 1000,
+    "mass": 20,
 
     "background_color": [0, 0, 0],
-    "particle_color": "magnitude",
+    "particle_color": "direction",
+    "color_table": "color_table.csv",
     
     "particles": [
         {
-            "shape": "donut",
-            "count": 500,
-            "x": 500,
+            "shape": "circle",
+            "count": 4000,
+            "x": 300,
             "y": 500,
-            "radius": 400,
-            "width": 100,
-            "speed": 50
+            "radius": 50,
+            "vx": 75
         },
         {
             "shape": "circle",
-            "count": 500,
-            "x": 100,
-            "y": 100,
-            "radius": 300,
-            "vx": 50,
-            "vy": 50
+            "count": 4000,
+            "x": 700,
+            "y": 500,
+            "radius": 50,
+            "vx": -75
         }
     ],
     "poles": [
         {
-            "x": 100,
-            "y": 100,
-            "strength": 200,
-            "radius": 50,
-            "speed": 100,
-            "theta_init": 120
+            "x": 500,
+            "y": 300,
+            "strength": -100
         },
         {
             "x": 500,
-            "y": 500,
-            "strength": -200,
-            "speed": 100,
-            "direction": 60
+            "y": 700,
+            "strength": -100
         }
     ]
 }
