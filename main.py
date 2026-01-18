@@ -124,6 +124,23 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     
     return parsed_scenario
 
+def move_particles(particles, poles, dt, force_multiplier=500000):
+
+    
+    delta = particles["pos"][:, None, :] - poles["pos"][None, :, :]
+    dist_sq = np.sum(delta**2, axis=2)
+    dist = np.sqrt(dist_sq)
+
+    force_mag = poles["strength"] / dist_sq
+    force_dir = delta / dist[:, :, None]
+    forces = force_dir * force_mag[:, :, None]
+
+    total_force = force_multiplier * forces.sum(axis=1)
+
+    acc = total_force / particles["mass"][:, None]
+    particles['vel'] += acc * dt
+    particles['pos'] += particles['vel'] * dt
+
 
 def main():
     pygame.init()
@@ -134,8 +151,6 @@ def main():
     pole_count = scenario_mapping['pole_count']
     background_color = scenario_mapping['background_color']
     color_table = scenario_mapping['color_table']
-
-    FORCE_MULTIPLIER = 500000
 
     particles = scenario_mapping['particles']
     poles = scenario_mapping['poles']
@@ -157,20 +172,8 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        delta = particles["pos"][:, None, :] - poles["pos"][None, :, :]
-        dist_sq = np.sum(delta**2, axis=2)
-        dist = np.sqrt(dist_sq)
-
-        force_mag = poles["strength"] / dist_sq
-        force_dir = delta / dist[:, :, None]
-        forces = force_dir * force_mag[:, :, None]
-
-        total_force = FORCE_MULTIPLIER * forces.sum(axis=1)
-
-        acc = total_force / particles["mass"][:, None]
-        particles['vel'] += acc * dt
-        particles['pos'] += particles['vel'] * dt
-
+        move_particles(particles, poles, dt)
+        
         magnitude = np.sqrt(np.sum(particles['vel']**2, axis=1)) + 1e-8
         direction = np.arctan2(particles['vel'][:, 1], particles['vel'][:, 0])
 
