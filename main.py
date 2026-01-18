@@ -1,12 +1,55 @@
 from typing import Any
 import pygame
 
-from particle import Particle
-from pole import Pole
 from random import randint
 import json
 import math
 import numpy as np
+
+def get_color_from_magnitude(vel: list[float]) -> tuple[int, int, int]:
+
+        # We'll use magnitude as the hue for hsv coloring and then convert to rgb
+        magnitude = math.sqrt(vel[0]*vel[0] + vel[1]*vel[1])
+        if magnitude > 360:
+            magnitude = 360
+
+        saturation: float = 1
+        brightness: float = 1
+
+        return hsv_to_rgb(magnitude, saturation, brightness)
+    
+def get_color_from_direction(vel: list[float]) -> tuple[int, int, int]:
+    # Use direction of velovity for hsv coloring and then convert to rgb
+
+    direction = math.atan2(vel[1], vel[0])
+
+    saturation = 1
+    brightness = 1
+
+    return hsv_to_rgb(direction, saturation, brightness)
+
+def hsv_to_rgb(h: float, s: float, v: float) -> tuple[int, int, int]:
+    h %= 360
+
+    chroma: float = v * s
+
+    X: float = chroma * (1 - abs((h / 60) % 2 - 1))
+    m: float = v - chroma
+
+    if h < 60:
+        r, g, b = (chroma, X, 0)
+    elif h < 120:
+        r, g, b = (X, chroma, 0)
+    elif h < 180:
+        r, g, b = (0, chroma, X)
+    elif h < 240:
+        r, g, b = (0, X, chroma)
+    elif h < 300:
+        r, g, b = (X, 0, chroma)
+    else:
+        r, g, b = (chroma, 0, X)
+
+    return (int((r+m)*255), int((g+m)*255), int((b+m)*255))
 
 def generate_donut(particle_pos: list[list[float]], 
                    particle_vel: list[list[float]],
@@ -175,9 +218,12 @@ def main():
 
         # Draw particles
         for i in range(particle_count):
-
-            pygame.draw.circle(screen, (0, 255, 0), particles['pos'][i], particle_size)
-
+            if scenario_mapping['particle_color'] == 'magnitude':
+                pygame.draw.circle(screen, get_color_from_magnitude(particles['vel'][i]), particles['pos'][i], particle_size)
+            elif scenario_mapping['particle_color'] == 'direction':
+                pygame.draw.circle(screen, get_color_from_direction(particles['vel'][i]), particles['pos'][i], particle_size)
+            else:
+                pygame.draw.circle(screen, scenario_mapping['particle_color'], particles['pos'][i], particle_size)
         # flip() the display to put your work on screen
         pygame.display.flip()
 
