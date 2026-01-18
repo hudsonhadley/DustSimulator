@@ -2,25 +2,10 @@ from typing import Any
 import pygame
 
 from random import randint
+from make_color_table import read_table
 import json
 import math
 import numpy as np
-
-def get_color_from_magnitude(magnitude) -> tuple[int, int, int]:
-
-        # We'll use magnitude as the hue for hsv coloring and then convert to rgb
-        if magnitude > 360:
-            magnitude = 360
-
-        return 255, 255, 255
-    
-def get_color_from_direction(direction) -> tuple[int, int, int]:
-    # Use direction of velovity for hsv coloring and then convert to rgb
-
-    saturation = 1
-    brightness = 1
-
-    return 255, 255, 255
 
 def generate_donut(particle_pos: list[list[float]], 
                    particle_vel: list[list[float]],
@@ -79,6 +64,12 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     parsed_scenario["height"] = scenario.get("height", 1000)
     parsed_scenario["background_color"] = scenario.get("background_color", [0, 0, 0])
     parsed_scenario["particle_color"] = scenario.get("particle_color", [255, 255, 255])
+    color_table_file = scenario.get("color_table", None)
+
+    if type(parsed_scenario["particle_color"]) is not list and color_table_file is None:
+        raise AttributeError("if a non constant color is defined for the particles, a color table must be provided")
+    elif color_table_file is not None:
+        parsed_scenario['color_table'] = read_table(color_table_file)
 
     particle_pos = []
     particle_vel = []
@@ -142,6 +133,7 @@ def main():
     particle_count = scenario_mapping['particle_count']
     pole_count = scenario_mapping['pole_count']
     background_color = scenario_mapping['background_color']
+    color_table = scenario_mapping['color_table']
 
     particles = scenario_mapping['particles']
     poles = scenario_mapping['poles']
@@ -178,7 +170,7 @@ def main():
         particles['pos'] += particles['vel'] * dt
 
         magnitude = np.sqrt(np.sum(particles['vel']**2, axis=1)) + 1e-8
-        direction = particles['vel'] / magnitude[:, None]
+        direction = np.arctan2(particles['vel'][:, 1], particles['vel'][:, 0])
 
         screen.fill(background_color)
 
@@ -193,11 +185,18 @@ def main():
         # Draw particles
         for i in range(particle_count):
             if scenario_mapping['particle_color'] == 'magnitude':
-                pygame.draw.circle(screen, get_color_from_magnitude(magnitude[i]), particles['pos'][i], particle_size)
+                m = magnitude[i] % 360
+                color_idx = int(m * len(color_table) / 360)
+                pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
+
             elif scenario_mapping['particle_color'] == 'direction':
-                pygame.draw.circle(screen, get_color_from_direction(direction[i]), particles['pos'][i], particle_size)
+                d = direction[i] * 360 / (2 * math.pi)
+                color_idx = int(d * len(color_table) / 360)
+                pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
+
             else:
                 pygame.draw.circle(screen, scenario_mapping['particle_color'], particles['pos'][i], particle_size)
+                
         # flip() the display to put your work on screen
         pygame.display.flip()
 
