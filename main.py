@@ -135,6 +135,8 @@ def main():
     background_color = scenario_mapping['background_color']
     color_table = scenario_mapping['color_table']
 
+    FORCE_MULTIPLIER = 500000
+
     particles = scenario_mapping['particles']
     poles = scenario_mapping['poles']
     
@@ -163,7 +165,7 @@ def main():
         force_dir = delta / dist[:, :, None]
         forces = force_dir * force_mag[:, :, None]
 
-        total_force = forces.sum(axis=1)
+        total_force = FORCE_MULTIPLIER * forces.sum(axis=1)
 
         acc = total_force / particles["mass"][:, None]
         particles['vel'] += acc * dt
