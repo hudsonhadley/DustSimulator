@@ -109,16 +109,30 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     
     pole_pos = []
     pole_strength = []
+    pole_movements = []
     pole_count = 0
     for pole_spec in scenario["poles"]:
         pole_pos.append([pole_spec['x'], pole_spec['y']])
         pole_strength.append(pole_spec['strength'])
 
+        if "radius" in pole_spec.keys() and "speed" in pole_spec.keys():
+            pole_movements.append([
+                lambda t: pole_spec['radius'] * math.cos(t * pole_spec['speed']),
+                lambda t: pole_spec['radius'] * math.sin(t * pole_spec['speed'])
+            ])
+
+        else:
+            pole_movements.append([
+                lambda t: pole_spec.get('vx', 0) * t,
+                lambda t: pole_spec.get('vy', 0) * t
+            ])
+
         pole_count += 1
 
     parsed_scenario['poles'] = {
         'pos': np.array(pole_pos),
-        'strength': np.array(pole_strength)
+        'strength': np.array(pole_strength),
+        'movements': np.array(pole_movements)
     }     
     parsed_scenario['pole_count'] = pole_count
     
@@ -190,7 +204,9 @@ def main():
         # Draw particles
         for i in range(particle_count):
             if scenario_mapping['particle_color'] == 'magnitude':
-                m = magnitude[i] % 360
+                m = magnitude[i]
+                m = m if m <= 360 else 360 # Clamp to be less than or equal to 360
+
                 color_idx = int(m * len(color_table) / 360)
                 pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
 
