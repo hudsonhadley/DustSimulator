@@ -42,8 +42,8 @@ def generate_circle(particle_pos: list[list[float]],
         mag = randint(0, radius)
         dir = math.radians(randint(0, 360))
 
-        x_pos = mag * math.cos(dir) + x
-        y_pos = mag * math.sin(dir) + y
+        x_pos = mag * np.cos(dir) + x
+        y_pos = mag * np.sin(dir) + y
         particle_pos.append([x_pos, y_pos])
         particle_vel.append([vx, vy])
 
@@ -109,38 +109,47 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     
     pole_pos = []
     pole_strength = []
-    pole_movements = []
+    pole_movement = []
     pole_count = 0
     for pole_spec in scenario["poles"]:
-        pole_pos.append([pole_spec['x'], pole_spec['y']])
-        pole_strength.append(pole_spec['strength'])
 
         if "radius" in pole_spec.keys() and "speed" in pole_spec.keys():
-            pole_movements.append([
-                lambda t: pole_spec['radius'] * math.cos(t * pole_spec['speed']),
-                lambda t: pole_spec['radius'] * math.sin(t * pole_spec['speed'])
+            pole_movement.append({
+                'type': 'circle',
+                'radius': pole_spec['radius'],
+                'speed': pole_spec['speed']
+            })
+
+            pole_pos.append([
+                pole_spec['x'] + pole_spec['radius'] * np.cos(pole_spec.get('theta', 0)),
+                pole_spec['y'] + pole_spec['radius'] * np.sin(pole_spec.get('theta', 0))
             ])
 
         else:
-            pole_movements.append([
-                lambda t: pole_spec.get('vx', 0) * t,
-                lambda t: pole_spec.get('vy', 0) * t
-            ])
+            pole_movement.append({
+                'type': 'line',
+                'vx': pole_spec.get('vx', 0),
+                'vy': pole_spec.get('vy', 0)
+            })
 
+            pole_pos.append([pole_spec['x'], pole_spec['y']])
+
+        pole_strength.append(pole_spec['strength'])
         pole_count += 1
 
     parsed_scenario['poles'] = {
         'pos': np.array(pole_pos),
         'strength': np.array(pole_strength),
-        'movements': np.array(pole_movements)
+        'movement': pole_movement
     }     
     parsed_scenario['pole_count'] = pole_count
     
     return parsed_scenario
 
 def move_particles(particles, poles, dt, force_multiplier=500000):
+    if len(particles['pos']) == 0:
+        return
 
-    
     delta = particles["pos"][:, None, :] - poles["pos"][None, :, :]
     dist_sq = np.sum(delta**2, axis=2)
     dist = np.sqrt(dist_sq)
@@ -154,6 +163,12 @@ def move_particles(particles, poles, dt, force_multiplier=500000):
     acc = total_force / particles["mass"][:, None]
     particles['vel'] += acc * dt
     particles['pos'] += particles['vel'] * dt
+
+def move_poles(poles, dt):
+    for i in range(len(poles['pos'])):
+        if poles['movement'][i]['type'] == 'line':
+            poles['pos'][i, 0] += poles['movement'][i]['vx'] * dt
+            poles['pos'][i, 1] += poles['movement'][i]['vy'] * dt
 
 
 def main():
@@ -187,9 +202,11 @@ def main():
                 running = False
 
         move_particles(particles, poles, dt)
-        
-        magnitude = np.sqrt(np.sum(particles['vel']**2, axis=1)) + 1e-8
-        direction = np.arctan2(particles['vel'][:, 1], particles['vel'][:, 0])
+        move_poles(poles, dt)
+
+        if len(particles['pos']) > 0:
+            magnitude = np.sqrt(np.sum(particles['vel']**2, axis=1)) + 1e-8
+            direction = np.arctan2(particles['vel'][:, 1], particles['vel'][:, 0])
 
         screen.fill(background_color)
 
@@ -211,7 +228,7 @@ def main():
                 pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
 
             elif scenario_mapping['particle_color'] == 'direction':
-                d = direction[i] * 360 / (2 * math.pi)
+                d = direction[i] * 360 / (2 * np.pi)
                 color_idx = int(d * len(color_table) / 360)
                 pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
 
