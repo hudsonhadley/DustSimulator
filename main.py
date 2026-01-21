@@ -246,12 +246,12 @@ def main():
                 m = magnitude[i]
                 m = m if m <= 360 else 360 # Clamp to be less than or equal to 360
 
-                color_idx = int(m * len(color_table) / 360)
+                color_idx = int(m * len(color_table) / 360) % len(color_table)
                 pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
 
             elif scenario_mapping['particle_color'] == 'direction':
                 d = direction[i] * 360 / (2 * np.pi)
-                color_idx = int(d * len(color_table) / 360)
+                color_idx = int(d * len(color_table) / 360) % len(color_table)
                 pygame.draw.circle(screen, color_table[color_idx], particles['pos'][i], particle_size)
 
             else:
