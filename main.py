@@ -117,12 +117,13 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
 
         if "radius" in pole_spec.keys() and "speed" in pole_spec.keys():
             pole_movement.append('circle')
-            pole_vel.append([pole_spec['speed'] * np.sin(pole_spec.get('theta', 0)),
-                        pole_spec['speed'] * np.cos(pole_spec.get('theta', 0))])
+            theta = np.deg2rad(pole_spec.get('theta', 0))
+            pole_vel.append([pole_spec['speed'] * np.sin(theta),
+                        pole_spec['speed'] * np.cos(theta)])
 
             pole_pos.append([
-                pole_spec['x'] + pole_spec['radius'] * np.cos(pole_spec.get('theta', 0)),
-                pole_spec['y'] + pole_spec['radius'] * np.sin(pole_spec.get('theta', 0))
+                pole_spec['x'] + pole_spec['radius'] * np.cos(theta),
+                pole_spec['y'] + pole_spec['radius'] * np.sin(theta)
             ])
 
             pole_center.append([pole_spec['x'], pole_spec['y']])
