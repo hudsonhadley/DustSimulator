@@ -109,30 +109,31 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     
     pole_pos = []
     pole_strength = []
+    pole_vel = []
     pole_movement = []
+    pole_center = []
     pole_count = 0
     for pole_spec in scenario["poles"]:
 
         if "radius" in pole_spec.keys() and "speed" in pole_spec.keys():
-            pole_movement.append({
-                'type': 'circle',
-                'radius': pole_spec['radius'],
-                'speed': pole_spec['speed']
-            })
+            pole_movement.append('circle')
+            pole_vel.append([pole_spec['speed'] * np.sin(pole_spec.get('theta', 0)),
+                        pole_spec['speed'] * np.cos(pole_spec.get('theta', 0))])
 
             pole_pos.append([
                 pole_spec['x'] + pole_spec['radius'] * np.cos(pole_spec.get('theta', 0)),
                 pole_spec['y'] + pole_spec['radius'] * np.sin(pole_spec.get('theta', 0))
             ])
 
+            pole_center.append([pole_spec['x'], pole_spec['y']])
+
         else:
-            pole_movement.append({
-                'type': 'line',
-                'vx': pole_spec.get('vx', 0),
-                'vy': pole_spec.get('vy', 0)
-            })
+            pole_movement.append('line')
+            pole_vel.append([pole_spec.get('vx', 0), pole_spec.get('vy', 0)])
 
             pole_pos.append([pole_spec['x'], pole_spec['y']])
+
+            pole_center.append(None)
 
         pole_strength.append(pole_spec['strength'])
         pole_count += 1
@@ -140,7 +141,9 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     parsed_scenario['poles'] = {
         'pos': np.array(pole_pos),
         'strength': np.array(pole_strength),
-        'movement': pole_movement
+        'vel': np.array(pole_vel),
+        'movement': pole_movement,
+        'center': pole_center
     }     
     parsed_scenario['pole_count'] = pole_count
     
@@ -166,9 +169,28 @@ def move_particles(particles, poles, dt, force_multiplier=500000):
 
 def move_poles(poles, dt):
     for i in range(len(poles['pos'])):
-        if poles['movement'][i]['type'] == 'line':
-            poles['pos'][i, 0] += poles['movement'][i]['vx'] * dt
-            poles['pos'][i, 1] += poles['movement'][i]['vy'] * dt
+        if poles['movement'][i] == 'line':
+            poles['pos'][i, 0] += poles['vel'][i, 0] * dt
+            poles['pos'][i, 1] += poles['vel'][i, 1] * dt
+        
+        elif poles['movement'][i] == 'circle':
+            speed = np.sqrt(poles['vel'][i, 0]**2 + poles['vel'][i, 1]**2)
+
+            r_vec = poles['pos'][i] - poles['center'][i]
+
+            radius = np.sqrt(np.sum((r_vec)**2))
+
+            omega = speed / radius
+            dtheta = omega * dt
+
+            rot = np.array([
+                [np.cos(dtheta), -np.sin(dtheta)],
+                [np.sin(dtheta), np.cos(dtheta)]
+            ])
+
+            new_r_vec = np.matmul(rot, r_vec)
+            
+            poles['pos'][i] = poles['center'][i] + new_r_vec
 
 
 def main():
@@ -195,7 +217,7 @@ def main():
     particle_size: int = 1
 
     while running:
-        dt = clock.tick(60) / 1000.0
+        dt = clock.tick(30) / 1000.0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
