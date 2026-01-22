@@ -65,6 +65,7 @@ def read_scenario(scenario_file: str) -> dict[str, Any]:
     parsed_scenario["background_color"] = scenario.get("background_color", [0, 0, 0])
     parsed_scenario["particle_color"] = scenario.get("particle_color", [255, 255, 255])
     color_table_file = scenario.get("color_table", None)
+    parsed_scenario["speed"] = scenario.get("speed", 1)
 
     if type(parsed_scenario["particle_color"]) is not list and color_table_file is None:
         raise AttributeError("if a non constant color is defined for the particles, a color table must be provided")
@@ -203,6 +204,7 @@ def main():
     pole_count = scenario_mapping['pole_count']
     background_color = scenario_mapping['background_color']
     color_table = scenario_mapping['color_table']
+    speed = scenario_mapping['speed']
 
     particles = scenario_mapping['particles']
     poles = scenario_mapping['poles']
@@ -218,7 +220,7 @@ def main():
     particle_size: int = 1
 
     while running:
-        dt = clock.tick(30) / 1000.0
+        dt = speed * clock.tick(60) / 1000.0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
