@@ -220,14 +220,16 @@ def main():
     particle_size: int = 1
 
     while running:
-        dt = speed * clock.tick(60) / 1000.0
+        dt = clock.tick(60) / 1000.0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        move_particles(particles, poles, dt)
-        move_poles(poles, dt)
+        for frames in range(speed):
+
+            move_particles(particles, poles, dt)
+            move_poles(poles, dt)
 
         if len(particles['pos']) > 0:
             magnitude = np.sqrt(np.sum(particles['vel']**2, axis=1)) + 1e-8
