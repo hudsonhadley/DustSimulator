@@ -19,16 +19,18 @@ def generate_donut(particle_pos: list[list[float]],
                    speed: float=0
                    ):
     
+    vel_const = speed / np.sqrt(1/radius)
     for i in range(particle_count):
-        mag = randint(radius-width, radius)    
-        dir = math.radians(randint(0, 360))
+        rad = randint(radius-width, radius)    
+        dir = np.radians(randint(0, 360))
 
-        x_pos = mag * math.cos(dir) + x
-        y_pos = mag * math.sin(dir) + y
+        x_pos = rad * np.cos(dir) + x
+        y_pos = rad * np.sin(dir) + y
         particle_pos.append([x_pos, y_pos])
 
-        vx = speed * math.cos(dir + math.pi/2)
-        vy = speed * math.sin(dir + math.pi/2)
+        vel_mag = vel_const * np.sqrt(1/rad)
+        vx = vel_mag * np.cos(dir + np.pi/2)
+        vy = vel_mag * np.sin(dir + np.pi/2)
         particle_vel.append([vx, vy])
 
 def generate_circle(particle_pos: list[list[float]], 
