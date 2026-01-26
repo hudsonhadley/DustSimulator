@@ -1,3 +1,5 @@
+import sys
+
 from typing import Any
 import pygame
 
@@ -197,7 +199,7 @@ def move_poles(poles, dt):
 
 def main():
     pygame.init()
-    scenario_mapping = read_scenario("scenario.json")
+    scenario_mapping = read_scenario(sys.argv[1])
     width = scenario_mapping["width"]
     height = scenario_mapping["height"]
     particle_count = scenario_mapping['particle_count']
