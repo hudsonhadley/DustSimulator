@@ -1,0 +1,36 @@
+{
+    "width": 2000,
+    "height": 1400,
+    "background_color": [0, 0, 0],
+    "color_table": "color_table.csv",
+    "particle_color": "direction",
+    "mass": 20,
+    "speed": 1,
+
+    "particles": [
+        {
+            "shape": "donut",
+            "x": 1000,
+            "y": 700,
+            "radius": 300,
+            "width": 200,
+            "count": 5000,
+            "speed": -129
+        }
+    ],
+    
+    "poles": [
+        {
+            "x": 1000,
+            "y": 700,
+            "strength": -200
+        },
+        {
+            "x": 1000,
+            "y": 700,
+            "strength": -100,
+            "radius": 650,
+            "speed": 129
+        }
+    ]
+}
